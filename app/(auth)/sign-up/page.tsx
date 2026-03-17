@@ -324,95 +324,99 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Basic Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedType && selectedType !== "school" && (
                       <div>
-                        <Label htmlFor="name">Full Name</Label>
-                        <div className="relative mt-1">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="name"
-                            {...register("name")}
-                            placeholder="John Doe"
-                            className="pl-9"
-                          />
-                        </div>
-                        {errors.name && (
-                          <p className="text-xs text-destructive mt-1">
-                            {errors.name.message as string}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="email">Email</Label>
-                        <div className="relative mt-1">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="email"
-                            {...register("email")}
-                            type="email"
-                            placeholder="you@example.com"
-                            className="pl-9"
-                          />
-                        </div>
-                        {errors.email && (
-                          <p className="text-xs text-destructive mt-1">
-                            {errors.email.message as string}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <div className="relative mt-1">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            {...register("phone")}
-                            placeholder="+254 7XX XXX XXX"
-                            className="pl-9"
-                          />
-                        </div>
-                        {errors.phone && (
-                          <p className="text-xs text-destructive mt-1">
-                            {errors.phone.message as string}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <Label htmlFor="password">Password</Label>
-                        <div className="relative mt-1">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="password"
-                            {...register("password")}
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Create a password"
-                            className="pl-9 pr-9"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2"
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="name">Full Name</Label>
+                            <div className="relative mt-1">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="name"
+                                {...register("name")}
+                                placeholder="John Doe"
+                                className="pl-9"
+                              />
+                            </div>
+                            {errors.name && (
+                              <p className="text-xs text-destructive mt-1">
+                                {errors.name.message as string}
+                              </p>
                             )}
-                          </button>
-                        </div>
-                        {errors.password && (
-                          <p className="text-xs text-destructive mt-1">
-                            {errors.password.message as string}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                          </div>
 
-                    {/* Password Rules */}
-                    <PasswordRules password={passwordValue || ""} />
+                          <div>
+                            <Label htmlFor="email">Email</Label>
+                            <div className="relative mt-1">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="email"
+                                {...register("email")}
+                                type="email"
+                                placeholder="you@example.com"
+                                className="pl-9"
+                              />
+                            </div>
+                            {errors.email && (
+                              <p className="text-xs text-destructive mt-1">
+                                {errors.email.message as string}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <Label htmlFor="phone">Phone Number</Label>
+                            <div className="relative mt-1">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="phone"
+                                {...register("phone")}
+                                placeholder="+254 7XX XXX XXX"
+                                className="pl-9"
+                              />
+                            </div>
+                            {errors.phone && (
+                              <p className="text-xs text-destructive mt-1">
+                                {errors.phone.message as string}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <Label htmlFor="password">Password</Label>
+                            <div className="relative mt-1">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                id="password"
+                                {...register("password")}
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Create a password"
+                                className="pl-9 pr-9"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2"
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                            </div>
+                            {errors.password && (
+                              <p className="text-xs text-destructive mt-1">
+                                {errors.password.message as string}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Password Rules */}
+                        <PasswordRules password={passwordValue || ""} />
+                      </div>
+                    )}
 
                     {/* Type-specific forms */}
                     {selectedType === "teacher" && (

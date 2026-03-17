@@ -139,6 +139,7 @@ export const teacherSchema = baseSchema.extend({
 export const schoolSchema = baseSchema
   .extend({
     institutionName: z.string().min(2, "Institution name required"),
+
     institutionType: z.enum([
       "primary",
       "secondary",
@@ -146,17 +147,24 @@ export const schoolSchema = baseSchema
       "university",
       "other",
     ]),
+
     country: z.string().min(1, "Country is required"),
+
     state: z.string().min(1, "County/State is required"),
+
     city: z.string().min(1, "City is required"),
+
     customCity: z.string().optional(),
-    registrationNumber: z.string().optional(),
+
+    // ✅ Added coordinates
+    latitude: z.string().optional(),
+    longitude: z.string().optional(),
   })
   .refine(
     (data) => {
-      // If city is "other", customCity must be provided
-      if (data.city === "other" && !data.customCity) {
-        return false;
+      // If "Other" city → must type a real value
+      if (data.city === "other") {
+        return !!data.customCity?.trim();
       }
       return true;
     },

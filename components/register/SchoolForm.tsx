@@ -10,14 +10,7 @@ import {
 import { motion } from "framer-motion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  School,
-  MapPin,
-  Globe,
-  Building2,
-  ChevronDown,
-  Plus,
-} from "lucide-react";
+import { School, MapPin, Building2, Plus } from "lucide-react";
 
 import {
   Select,
@@ -26,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { Country, State, City } from "country-state-city";
 import { SchoolFormData } from "@/schema/auth";
 
@@ -54,19 +48,25 @@ export function SchoolForm({
   const watchState = watch("state");
   const watchCity = watch("city");
 
-  // Update states when country changes
+  // ✅ Set default country to Kenya
+  useEffect(() => {
+    setValue("country", "KE");
+  }, [setValue]);
+
+  // ✅ Load states when country changes
   useEffect(() => {
     if (watchCountry) {
       const countryStates = State.getStatesOfCountry(watchCountry);
       setStates(countryStates);
       setSelectedCountry(watchCountry);
+
       setCities([]);
       setValue("state", "");
       setValue("city", "");
     }
   }, [watchCountry, setValue]);
 
-  // Update cities when state changes
+  // ✅ Load cities when state changes
   useEffect(() => {
     if (watchState && selectedCountry) {
       const stateCities = City.getCitiesOfState(selectedCountry, watchState);
@@ -75,10 +75,34 @@ export function SchoolForm({
     }
   }, [watchState, selectedCountry, setValue]);
 
-  // Check if city is "other"
+  // ✅ Show custom city input
   useEffect(() => {
     setShowCustomCity(watchCity === "other");
   }, [watchCity]);
+
+  // ✅ Coordinates logic (MAIN FEATURE)
+  useEffect(() => {
+    if (!watchState || !selectedCountry) return;
+
+    const selectedStateObj = states.find((s) => s.isoCode === watchState);
+
+    // If user selected a real city
+    if (watchCity && watchCity !== "other") {
+      const selectedCityObj = cities.find((c) => c.name === watchCity);
+
+      if (selectedCityObj) {
+        setValue("latitude", selectedCityObj.latitude);
+        setValue("longitude", selectedCityObj.longitude);
+        return;
+      }
+    }
+
+    // Fallback to state coordinates
+    if (selectedStateObj) {
+      setValue("latitude", selectedStateObj.latitude);
+      setValue("longitude", selectedStateObj.longitude);
+    }
+  }, [watchCity, watchState, cities, states, selectedCountry, setValue]);
 
   return (
     <motion.div
@@ -92,11 +116,10 @@ export function SchoolForm({
       <div className="grid grid-cols-1 gap-4">
         {/* Institution Name */}
         <div>
-          <Label htmlFor="institutionName">Institution Name</Label>
+          <Label className="block w-full text-left">Institution Name</Label>
           <div className="relative mt-1">
             <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              id="institutionName"
               {...register("institutionName")}
               placeholder="School or institution name"
               className="pl-9"
@@ -111,37 +134,32 @@ export function SchoolForm({
 
         {/* Institution Type */}
         <div>
-          <Label htmlFor="institutionType">Institution Type</Label>
+          <Label className="block w-full text-left">Institution Type</Label>
           <Select
             onValueChange={(value) => setValue("institutionType", value as any)}
             defaultValue={watch("institutionType")}
           >
             <SelectTrigger className="w-full mt-1">
-              <SelectValue placeholder="Select institution type" />
+              <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="primary">Primary School</SelectItem>
-              <SelectItem value="secondary">Secondary School</SelectItem>
+              <SelectItem value="primary">Primary</SelectItem>
+              <SelectItem value="secondary">Secondary</SelectItem>
               <SelectItem value="college">College</SelectItem>
               <SelectItem value="university">University</SelectItem>
               <SelectItem value="other">Other</SelectItem>
             </SelectContent>
           </Select>
-          {errors.institutionType && (
-            <p className="text-xs text-destructive mt-1">
-              {errors.institutionType.message}
-            </p>
-          )}
         </div>
 
-        {/* Country Selection */}
+        {/* Country */}
         <div>
-          <Label htmlFor="country">Country</Label>
+          <Label className="block w-full text-left">Country</Label>
           <Select
             onValueChange={(value) => setValue("country", value)}
-            defaultValue={watchCountry || "KE"}
+            defaultValue="KE"
           >
-            <SelectTrigger className="w-full mt-1">
+            <SelectTrigger className="w-full  mt-1">
               <SelectValue placeholder="Select country" />
             </SelectTrigger>
             <SelectContent>
@@ -152,17 +170,12 @@ export function SchoolForm({
               ))}
             </SelectContent>
           </Select>
-          {errors.country && (
-            <p className="text-xs text-destructive mt-1">
-              {errors.country.message}
-            </p>
-          )}
         </div>
 
-        {/* State/County Selection */}
+        {/* State */}
         {states.length > 0 && (
           <div>
-            <Label htmlFor="state">County / State</Label>
+            <Label className="block w-full text-left">County / State</Label>
             <Select
               onValueChange={(value) => setValue("state", value)}
               defaultValue={watchState}
@@ -178,18 +191,13 @@ export function SchoolForm({
                 ))}
               </SelectContent>
             </Select>
-            {errors.state && (
-              <p className="text-xs text-destructive mt-1">
-                {errors.state.message}
-              </p>
-            )}
           </div>
         )}
 
-        {/* City Selection */}
+        {/* City */}
         {cities.length > 0 && (
           <div>
-            <Label htmlFor="city">City</Label>
+            <Label className="block w-full text-left">City</Label>
             <Select
               onValueChange={(value) => setValue("city", value)}
               defaultValue={watchCity}
@@ -203,62 +211,30 @@ export function SchoolForm({
                     {city.name}
                   </SelectItem>
                 ))}
-                <SelectItem
-                  value="other"
-                  className="text-primary border-t mt-1 pt-1"
-                >
+
+                <SelectItem value="other">
                   <Plus className="h-3 w-3 inline mr-1" />
                   Other (type manually)
                 </SelectItem>
               </SelectContent>
             </Select>
-            {errors.city && (
-              <p className="text-xs text-destructive mt-1">
-                {errors.city.message}
-              </p>
-            )}
           </div>
         )}
 
-        {/* Custom City Input */}
+        {/* Custom City */}
         {showCustomCity && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Label htmlFor="customCity">Enter your city</Label>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <Label className="block w-full text-left">Enter your city</Label>
             <div className="relative mt-1">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" />
               <Input
-                id="customCity"
                 {...register("customCity")}
-                placeholder="Enter your city name"
-                className="pl-9"
+                placeholder="Enter your city"
+                className="w-full pl-9"
               />
             </div>
-            {errors.customCity && (
-              <p className="text-xs text-destructive mt-1">
-                {errors.customCity.message}
-              </p>
-            )}
           </motion.div>
         )}
-
-        {/* Registration Number (optional) */}
-        <div>
-          <Label htmlFor="registrationNumber">
-            Registration Number (optional)
-          </Label>
-          <div className="relative mt-1">
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="registrationNumber"
-              {...register("registrationNumber")}
-              placeholder="REG/2024/001"
-              className="pl-9"
-            />
-          </div>
-        </div>
       </div>
     </motion.div>
   );

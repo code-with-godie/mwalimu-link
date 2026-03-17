@@ -22,9 +22,9 @@ export function ParentForm({ register, errors }: ParentFormProps) {
     >
       <h3 className="font-semibold text-sm">Parent Information</h3>
       <div className="grid grid-cols-1 gap-4">
-        <div>
+        {/* <div>
           <Label htmlFor="childrenCount">Number of Children (optional)</Label>
-          {/* <div className="relative mt-1">
+          <div className="relative mt-1">
             <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               id="childrenCount"
@@ -33,11 +33,11 @@ export function ParentForm({ register, errors }: ParentFormProps) {
               placeholder="2"
               className="pl-9"
             />
-          </div> */}
+          </div>
           <p className="text-xs text-muted-foreground mt-1">
             How many children do you have?
           </p>
-        </div>
+        </div> */}
       </div>
     </motion.div>
   );
