@@ -98,10 +98,10 @@ export function Navbar({ session }: { session: Session | null }) {
           ))}
           <div className="flex gap-2 pt-2">
             <Button variant="outline" size="sm" className="flex-1" asChild>
-              <Link href="/login">Log in</Link>
+              <Link href="/sign-in">Log in</Link>
             </Button>
             <Button size="sm" className="flex-1" asChild>
-              <Link href="/register">Get Started</Link>
+              <Link href="/sign-up">Get Started</Link>
             </Button>
           </div>
         </div>
