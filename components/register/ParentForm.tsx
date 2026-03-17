@@ -20,7 +20,7 @@ export function ParentForm({ register, errors }: ParentFormProps) {
       exit={{ opacity: 0, height: 0 }}
       className="space-y-4 pt-4 border-t"
     >
-      <h3 className="font-semibold text-sm">Parent Information</h3>
+      {/* <h3 className="font-semibold text-sm">Parent Information</h3> */}
       <div className="grid grid-cols-1 gap-4">
         {/* <div>
           <Label htmlFor="childrenCount">Number of Children (optional)</Label>

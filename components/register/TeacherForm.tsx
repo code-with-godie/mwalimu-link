@@ -24,7 +24,12 @@ export function TeacherForm({ register, errors, watch }: TeacherFormProps) {
       <h3 className="font-semibold text-sm">Professional Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="tscNumber">TSC Number (optional)</Label>
+          <Label
+            className="block text-sm font-medium text-left mb-1"
+            htmlFor="tscNumber"
+          >
+            TSC Number (optional)
+          </Label>
           <div className="relative mt-1">
             <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -42,7 +47,12 @@ export function TeacherForm({ register, errors, watch }: TeacherFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="experience">Years of Experience</Label>
+          <Label
+            className="block text-sm font-medium text-left mb-1"
+            htmlFor="experience"
+          >
+            Years of Experience
+          </Label>
           <div className="relative mt-1">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -61,7 +71,12 @@ export function TeacherForm({ register, errors, watch }: TeacherFormProps) {
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="subjects">Subjects</Label>
+          <Label
+            className="block text-sm font-medium text-left mb-1"
+            htmlFor="subjects"
+          >
+            Subjects
+          </Label>
           <div className="relative mt-1">
             <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -82,7 +97,12 @@ export function TeacherForm({ register, errors, watch }: TeacherFormProps) {
         </div>
 
         <div className="md:col-span-2">
-          <Label htmlFor="qualifications">Qualifications</Label>
+          <Label
+            className="block text-sm font-medium text-left mb-1"
+            htmlFor="qualifications"
+          >
+            Qualifications
+          </Label>
           <div className="relative mt-1">
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input

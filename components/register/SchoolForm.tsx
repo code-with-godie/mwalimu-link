@@ -144,7 +144,8 @@ export function SchoolForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="primary">Primary</SelectItem>
-              <SelectItem value="secondary">Secondary</SelectItem>
+              <SelectItem value="JSS">Junior Secondary</SelectItem>
+              <SelectItem value="SSS">Senior Secondary</SelectItem>
               <SelectItem value="college">College</SelectItem>
               <SelectItem value="university">University</SelectItem>
               <SelectItem value="other">Other</SelectItem>

@@ -322,13 +322,29 @@ export default function RegisterPage() {
                         Account
                       </span>
                     </div>
+                    {/* Type-specific forms */}
+                    {selectedType === "teacher" && (
+                      <TeacherForm
+                        register={register}
+                        errors={errors}
+                        watch={watch}
+                      />
+                    )}
+                    {selectedType === "parent" && (
+                      <ParentForm register={register} errors={errors} />
+                    )}
 
                     {/* Basic Information */}
                     {selectedType && selectedType !== "school" && (
                       <div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <Label htmlFor="name">Full Name</Label>
+                            <Label
+                              className="block text-sm font-medium text-left mb-1"
+                              htmlFor="name"
+                            >
+                              Full Name
+                            </Label>
                             <div className="relative mt-1">
                               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
@@ -346,7 +362,12 @@ export default function RegisterPage() {
                           </div>
 
                           <div>
-                            <Label htmlFor="email">Email</Label>
+                            <Label
+                              className="block text-sm font-medium text-left mb-1"
+                              htmlFor="email"
+                            >
+                              Email
+                            </Label>
                             <div className="relative mt-1">
                               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
@@ -365,7 +386,12 @@ export default function RegisterPage() {
                           </div>
 
                           <div>
-                            <Label htmlFor="phone">Phone Number</Label>
+                            <Label
+                              className="block text-sm font-medium text-left mb-1"
+                              htmlFor="phone"
+                            >
+                              Phone Number
+                            </Label>
                             <div className="relative mt-1">
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
@@ -383,7 +409,12 @@ export default function RegisterPage() {
                           </div>
 
                           <div>
-                            <Label htmlFor="password">Password</Label>
+                            <Label
+                              className="block text-sm font-medium text-left mb-1"
+                              htmlFor="password"
+                            >
+                              Password
+                            </Label>
                             <div className="relative mt-1">
                               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                               <Input
@@ -418,15 +449,6 @@ export default function RegisterPage() {
                       </div>
                     )}
 
-                    {/* Type-specific forms */}
-                    {selectedType === "teacher" && (
-                      <TeacherForm
-                        register={register}
-                        errors={errors}
-                        watch={watch}
-                      />
-                    )}
-
                     {selectedType === "school" && (
                       <SchoolForm
                         register={register}
@@ -434,10 +456,6 @@ export default function RegisterPage() {
                         watch={watch}
                         setValue={setValue}
                       />
-                    )}
-
-                    {selectedType === "parent" && (
-                      <ParentForm register={register} errors={errors} />
                     )}
 
                     <Button
@@ -468,7 +486,7 @@ export default function RegisterPage() {
             </Card>
 
             {/* Social Sign Up - Only show on step 1 */}
-            {step === 1 && (
+            {selectedType && step > 1 && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
