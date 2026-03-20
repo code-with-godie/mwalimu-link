@@ -11,8 +11,20 @@ export default async function AccountSelectionLayout({
   if (!session) {
     redirect("/sign-in");
   }
-  if (session.user.accountType === "teacher") {
+  if (
+    session.user.accountType === "admin" ||
+    session.user.accountType === "super-admin"
+  ) {
+    redirect("/dashboard");
+  }
+  if (
+    session.user.accountType === "teacher" ||
+    session.user.accountType === "school"
+  ) {
     redirect("/jobs");
+  }
+  if (session.user.accountType === "parent") {
+    redirect("/tutors");
   }
   return children;
 }

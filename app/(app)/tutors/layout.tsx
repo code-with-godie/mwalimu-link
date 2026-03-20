@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default async function TeachersLayout({
+export default async function TutorsLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export default async function TeachersLayout({
     redirect("/account-selection");
   }
 
-  const ALLOWED_ACCOUNT_TYPES = ["admin", "super-admin", "school", "teacher"];
+  const ALLOWED_ACCOUNT_TYPES = ["admin", "super-admin", "school", "parent"];
   if (!ALLOWED_ACCOUNT_TYPES.includes(accountType)) {
     redirect("/");
   }
