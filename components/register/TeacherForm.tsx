@@ -18,6 +18,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { updateAccount } from "@/lib/actions/teachers";
 export function TeacherForm() {
   const {
     register,
@@ -28,15 +29,12 @@ export function TeacherForm() {
   } = useForm<TeacherFormData>({
     resolver: zodResolver(teacherSchema),
   });
-  console.log("form errros", errors);
 
   const [selectedOption, setSelectedOption] = useState<string>("");
   const onSubmit = async (data: TeacherFormData) => {
     try {
-      console.log("Submitted Data:", data);
-
-      // simulate API
-      await new Promise((res) => setTimeout(res, 1500));
+      const response = await updateAccount(data);
+      console.log("updated", response);
 
       toast.success("Form submitted successfully!");
     } catch (error) {

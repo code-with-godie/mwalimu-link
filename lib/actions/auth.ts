@@ -34,6 +34,7 @@ export async function signinWithSocial(provider: "github" | "google") {
   const { url } = await auth.api.signInSocial({
     body: {
       provider,
+      callbackURL: "/account-selection", // optional
     },
   });
   if (url) {
