@@ -42,7 +42,7 @@ export default function AuthLayout({
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex-1 flex items-center justify-center p-8"
+        className="flex-1 flex items-center justify-center p-2 md:p-8"
       >
         <div className="w-full">
           <motion.div

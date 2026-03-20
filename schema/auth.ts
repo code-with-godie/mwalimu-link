@@ -128,10 +128,10 @@ export const baseSchema = z.object({
 });
 
 // Teacher schema
-export const teacherSchema = baseSchema.extend({
+export const teacherSchema = z.object({
   tscNumber: z.string().optional(),
   subjects: z.string().optional(),
-  experience: z.string().optional(),
+  experience: z.number().optional(),
   qualifications: z.string().optional(),
 });
 

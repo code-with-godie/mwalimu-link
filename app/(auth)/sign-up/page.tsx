@@ -1,176 +1,103 @@
 "use client";
 
-import { useState } from "react";
+import { startTransition, useState } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  GraduationCap,
-  School,
-  Shield,
-  Users,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  User,
-  Phone,
-  CheckCircle,
-  ArrowRight,
-} from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react";
+import { toast } from "sonner";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+// shadcn components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
-import Link from "next/link";
-import { Label } from "@/components/ui/label";
-import { PasswordRules } from "@/components/passwordRules/PasswordRules";
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
-
-// Import form components
-import { TeacherForm } from "@/components/register/TeacherForm";
-import { SchoolForm } from "@/components/register/SchoolForm";
-import { ParentForm } from "@/components/register/ParentForm";
-
-// Import schemas and types
 import {
-  AccountType,
-  teacherSchema,
-  schoolSchema,
-  parentSchema,
-  baseSchema,
-  TeacherFormData,
-  SchoolFormData,
-  ParentFormData,
-} from "@/schema/auth";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-const accountTypes: {
-  type: AccountType;
-  label: string;
-  desc: string;
-  icon: React.ElementType;
-  color: string;
-}[] = [
-  {
-    type: "teacher",
-    label: "Teacher",
-    desc: "Find jobs and tutor students",
-    icon: GraduationCap,
-    color: "from-blue-500 to-cyan-500",
-  },
-  {
-    type: "school",
-    label: "School / Institution",
-    desc: "Post jobs and hire teachers",
-    icon: School,
-    color: "from-emerald-500 to-teal-500",
-  },
-  {
-    type: "parent",
-    label: "Parent",
-    desc: "Find tutors and resources",
-    icon: Users,
-    color: "from-purple-500 to-pink-500",
-  },
-  {
-    type: "admin",
-    label: "Admin",
-    desc: "Manage the platform",
-    icon: Shield,
-    color: "from-orange-500 to-red-500",
-  },
-];
+import { PasswordRules } from "@/components/passwordRules/PasswordRules";
+import { SchoolForm } from "@/components/register/SchoolForm";
 
-const ease = [0.16, 1, 0.3, 1] as const;
+// schemas
+import { AccountType, schoolSchema, baseSchema } from "@/schema/auth";
+import { signinWithSocial } from "@/lib/actions/auth";
 
 export default function RegisterPage() {
-  const [selectedType, setSelectedType] = useState<AccountType | null>(null);
-  const [step, setStep] = useState(1);
+  const [selectedType, setSelectedType] = useState<AccountType>("parent");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const router = useRouter();
+  const handleSocialLogin = (provider: "google" | "github") => {
+    setSocialLoading(provider);
 
-  // Get the appropriate schema based on selected type
-  const getSchema = () => {
-    switch (selectedType) {
-      case "teacher":
-        return teacherSchema;
-      case "school":
-        return schoolSchema;
-      case "parent":
-        return parentSchema;
-      default:
-        return baseSchema;
-    }
+    startTransition(async () => {
+      try {
+        await signinWithSocial(provider);
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        }
+        setSocialLoading(null);
+      }
+    });
   };
+  const schema = selectedType === "school" ? schoolSchema : baseSchema;
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<any>({
-    resolver: zodResolver(getSchema()),
+  const form = useForm<any>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      phone: "",
+    },
   });
 
-  const passwordValue = watch("password");
+  const passwordValue = form.watch("password");
 
   const onSubmit = async (data: any) => {
     try {
       setLoading(true);
 
-      // Prepare metadata based on account type
       const metadata: Record<string, any> = {
         accountType: selectedType,
-        phone: data.phone,
       };
 
-      // Add type-specific fields to metadata
-      if (selectedType === "teacher") {
-        metadata.tscNumber = data.tscNumber;
-        metadata.subjects =
-          data.subjects?.split(",").map((s: string) => s.trim()) || [];
-        metadata.experience = data.experience;
-        metadata.qualifications = data.qualifications;
-      } else if (selectedType === "school") {
+      if (selectedType === "school") {
         metadata.institutionName = data.institutionName;
         metadata.institutionType = data.institutionType;
-        metadata.location = {
-          country: data.country,
-          state: data.state,
-          city: data.city === "other" ? data.customCity : data.city,
-        };
-        metadata.registrationNumber = data.registrationNumber;
+        metadata.country = data.country;
+        metadata.state = data.state;
+        metadata.city = data.city === "other" ? data.customCity : data.city;
+      } else {
+        metadata.phone = data.phone;
       }
 
-      // Call Better Auth sign up
-      const response = await fetch("/api/auth/sign-up", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          email: data.email,
-          password: data.password,
-          metadata,
-        }),
-      });
+      const info = {
+        name: data.name || "",
+        email: data.email,
+        password: data.password,
+        metadata,
+      };
+      console.log(info);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Registration failed");
-      }
-
-      toast.success(
-        "Account created successfully! Please check your email to verify.",
-      );
-
-      // Redirect to sign in or verification page
-      setTimeout(() => {
-        router.push("/sign-in?registered=true");
-      }, 2000);
+      toast.success("Account created successfully!");
+      router.push("/sign-in");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Registration failed",
@@ -180,400 +107,287 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSocialSignUp = async (provider: string) => {
-    alert(`Social sign up with ${provider} is not implemented in this demo.`);
-  };
-
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-secondary/20 w-full">
-      <div className="flex-1 flex items-center justify-center py-12 px-4">
-        <div className="container max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease }}
-          >
-            {/* Header */}
-            <div className="text-center mb-8">
-              <Link href="/" className="inline-flex items-center gap-2 mb-6">
-                <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-base">
-                    ML
+    <div className="min-h-screen max-w-md flex items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-10">
+      <div className="w-full max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold">Create your account</h1>
+            <p className="text-muted-foreground mt-1">Join the platform</p>
+          </div>
+
+          <Card className="shadow-xl">
+            <CardContent className="p-6">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
+                  {/* Account Type Select */}
+                  <div className="text-left w-full">
+                    <FormLabel className="text-left w-full">
+                      Account Type
+                    </FormLabel>
+                    <Select
+                      value={selectedType}
+                      onValueChange={(value: AccountType) =>
+                        setSelectedType(value)
+                      }
+                    >
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="parent">Parent</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="school">
+                          School / Institution
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* SCHOOL FORM */}
+                  {selectedType === "school" ? (
+                    <SchoolForm
+                      register={form.register}
+                      errors={form.formState.errors}
+                      watch={form.watch}
+                      setValue={form.setValue}
+                    />
+                  ) : (
+                    <>
+                      {/* Name */}
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-left w-full">
+                              Full Name
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  {...field}
+                                  className="pl-9"
+                                  placeholder="John Doe"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Email */}
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-left w-full">
+                              Email
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  className="pl-9"
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Phone */}
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-left w-full">
+                              Phone
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input {...field} className="pl-9" />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Password */}
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-left w-full">
+                              Password
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  {...field}
+                                  type={showPassword ? "text" : "password"}
+                                  className="pl-9 pr-9"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                                >
+                                  {showPassword ? (
+                                    <EyeOff className="h-4 w-4" />
+                                  ) : (
+                                    <Eye className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <PasswordRules password={passwordValue || ""} />
+                    </>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating..." : "Create Account"}
+                  </Button>
+
+                  <p className="text-center text-sm text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link
+                      href="/sign-in"
+                      className="text-primary hover:underline"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </form>
+              </Form>
+              {/* Divider */}
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-background text-muted-foreground">
+                    Or continue with
                   </span>
                 </div>
-                <span className="font-semibold text-xl tracking-tight">
-                  Mwalimu Link
-                </span>
-              </Link>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {step === 1 ? "Create your account" : "Complete your profile"}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {step === 1
-                  ? "Join Kenya's premier platform for educators and institutions."
-                  : `Setting up your ${selectedType} account`}
-              </p>
-            </div>
+              </div>
 
-            <Card className="border-border shadow-xl">
-              <CardContent className="p-6 md:p-8">
-                {step === 1 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+              {/* Social Login Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSocialLogin("google")}
+                    disabled={socialLoading === "google"}
+                    className="w-full flex items-center justify-center"
                   >
-                    {/* Account Type Selection */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {accountTypes.map((at, index) => (
-                        <motion.div
-                          key={at.type}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
+                    {socialLoading === "google" ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="w-4 h-4 border-2 border-muted border-t-foreground rounded-full"
+                      />
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
+                          <path
+                            fill="currentColor"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                          />
+                          <path
+                            fill="currentColor"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                          />
+                        </svg>
+                        Google
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleSocialLogin("github")}
+                    disabled={socialLoading === "github"}
+                    className="w-full flex items-center justify-center"
+                  >
+                    {socialLoading === "github" ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                        className="w-4 h-4 border-2 border-muted border-t-foreground rounded-full"
+                      />
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
                         >
-                          <Card
-                            onClick={() => setSelectedType(at.type)}
-                            className={cn(
-                              "relative overflow-hidden cursor-pointer press-effect transition-all",
-                              selectedType === at.type
-                                ? "ring-2 ring-primary border-primary shadow-lg"
-                                : "hover:border-primary/30 hover:shadow-md",
-                            )}
-                          >
-                            <div
-                              className={cn(
-                                "absolute inset-0 opacity-0 bg-gradient-to-br",
-                                at.color,
-                                selectedType === at.type && "opacity-5",
-                              )}
-                            />
-                            <CardContent className="p-6">
-                              <div
-                                className={cn(
-                                  "h-12 w-12 rounded-xl flex items-center justify-center mb-4",
-                                  `bg-gradient-to-br ${at.color} bg-opacity-10`,
-                                )}
-                              >
-                                <at.icon className="h-6 w-6 text-primary" />
-                              </div>
-                              <h3 className="font-semibold text-lg">
-                                {at.label}
-                              </h3>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {at.desc}
-                              </p>
-                              {selectedType === at.type && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="absolute top-3 right-3"
-                                >
-                                  <CheckCircle className="h-5 w-5 text-primary" />
-                                </motion.div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    <Button
-                      className="w-full mt-6 h-12 text-base"
-                      disabled={!selectedType || loading}
-                      onClick={() => setStep(2)}
-                    >
-                      Continue
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-
-                    <p className="text-center text-sm text-muted-foreground mt-6">
-                      Already have an account?{" "}
-                      <Link
-                        href="/sign-in"
-                        className="text-primary hover:underline font-medium"
-                      >
-                        Sign in
-                      </Link>
-                    </p>
-                  </motion.div>
-                )}
-
-                {step === 2 && selectedType && (
-                  <motion.form
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="space-y-6"
-                  >
-                    {/* Account Type Badge */}
-                    <div className="flex items-center justify-center mb-6">
-                      <span
-                        className={cn(
-                          "px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r text-white",
-                          accountTypes.find((t) => t.type === selectedType)
-                            ?.color,
-                        )}
-                      >
-                        {
-                          accountTypes.find((t) => t.type === selectedType)
-                            ?.label
-                        }{" "}
-                        Account
-                      </span>
-                    </div>
-                    {/* Type-specific forms */}
-                    {selectedType === "teacher" && (
-                      <TeacherForm
-                        register={register}
-                        errors={errors}
-                        watch={watch}
-                      />
+                          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.082-.729.082-.729 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.305-5.466-1.333-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.124-.304-.535-1.528.117-3.176 0 0 1.008-.322 3.3 1.23a11.52 11.52 0 0 1 3.003-.403c1.02.005 2.047.138 3.003.403 2.29-1.552 3.296-1.23 3.296-1.23.653 1.648.242 2.872.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.807 5.623-5.48 5.92.43.372.814 1.102.814 2.222 0 1.606-.014 2.902-.014 3.293 0 .322.216.694.825.576C20.565 21.795 24 17.297 24 12c0-6.63-5.373-12-12-12z" />
+                        </svg>
+                        GitHub
+                      </>
                     )}
-                    {selectedType === "parent" && (
-                      <ParentForm register={register} errors={errors} />
-                    )}
-
-                    {/* Basic Information */}
-                    {selectedType && selectedType !== "school" && (
-                      <div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <Label
-                              className="block text-sm font-medium text-left mb-1"
-                              htmlFor="name"
-                            >
-                              Full Name
-                            </Label>
-                            <div className="relative mt-1">
-                              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="name"
-                                {...register("name")}
-                                placeholder="John Doe"
-                                className="pl-9"
-                              />
-                            </div>
-                            {errors.name && (
-                              <p className="text-xs text-destructive mt-1">
-                                {errors.name.message as string}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label
-                              className="block text-sm font-medium text-left mb-1"
-                              htmlFor="email"
-                            >
-                              Email
-                            </Label>
-                            <div className="relative mt-1">
-                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="email"
-                                {...register("email")}
-                                type="email"
-                                placeholder="you@example.com"
-                                className="pl-9"
-                              />
-                            </div>
-                            {errors.email && (
-                              <p className="text-xs text-destructive mt-1">
-                                {errors.email.message as string}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label
-                              className="block text-sm font-medium text-left mb-1"
-                              htmlFor="phone"
-                            >
-                              Phone Number
-                            </Label>
-                            <div className="relative mt-1">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="phone"
-                                {...register("phone")}
-                                placeholder="+254 7XX XXX XXX"
-                                className="pl-9"
-                              />
-                            </div>
-                            {errors.phone && (
-                              <p className="text-xs text-destructive mt-1">
-                                {errors.phone.message as string}
-                              </p>
-                            )}
-                          </div>
-
-                          <div>
-                            <Label
-                              className="block text-sm font-medium text-left mb-1"
-                              htmlFor="password"
-                            >
-                              Password
-                            </Label>
-                            <div className="relative mt-1">
-                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                id="password"
-                                {...register("password")}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="Create a password"
-                                className="pl-9 pr-9"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2"
-                              >
-                                {showPassword ? (
-                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                ) : (
-                                  <Eye className="h-4 w-4 text-muted-foreground" />
-                                )}
-                              </button>
-                            </div>
-                            {errors.password && (
-                              <p className="text-xs text-destructive mt-1">
-                                {errors.password.message as string}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Password Rules */}
-                        <PasswordRules password={passwordValue || ""} />
-                      </div>
-                    )}
-
-                    {selectedType === "school" && (
-                      <SchoolForm
-                        register={register}
-                        errors={errors}
-                        watch={watch}
-                        setValue={setValue}
-                      />
-                    )}
-
-                    <Button
-                      type="submit"
-                      className="w-full h-12 text-base"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          Creating account...
-                        </div>
-                      ) : (
-                        "Create Account"
-                      )}
-                    </Button>
-
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      className="text-sm text-muted-foreground hover:text-foreground block mx-auto"
-                    >
-                      ← Back to account type
-                    </button>
-                  </motion.form>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Social Sign Up - Only show on step 1 */}
-            {selectedType && step > 1 && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="mt-6"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-background text-muted-foreground">
-                      Or sign up with
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleSocialSignUp("google")}
-                    disabled={loading}
-                    className="w-full h-11"
-                  >
-                    <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      />
-                    </svg>
-                    Google
                   </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleSocialSignUp("facebook")}
-                    disabled={loading}
-                    className="w-full h-11"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                    Facebook
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Trust Badges */}
-      <div className="py-6 border-t">
-        <div className="container max-w-6xl mx-auto px-4">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-primary" />
-              <span>TSC Verified Platform</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
-              <span>Secure & Encrypted</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              <span>12,400+ Teachers</span>
-            </div>
-          </div>
-        </div>
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
